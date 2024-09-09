@@ -1,1 +1,4 @@
 django
+django-cors-headers
+djangorestframework
+django-db-connection-pool[mysql]

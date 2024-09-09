@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+AUTH_USER_MODEL = 'students.CustomUser'
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +28,9 @@ SECRET_KEY = 'django-insecure-7nog$8@pt^5o*)b0@!@d(vgff_b-egrnuz)d(n&nt6uanc*x8#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
+ACCESS_CONTROL_ALLOW_ORIGIN: True
 
 
 # Application definition
@@ -37,6 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'health',
+    'students',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'student_management_project.urls'
@@ -73,10 +83,26 @@ WSGI_APPLICATION = 'student_management_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE' : 'dj_db_conn_pool.backends.mysql',
+        'NAME': 'student_mngt_system',
+        'HOST' : '127.0.0.1',
+        'PORT': 3306,
+        'USER' : 'root',
+        'PASSWORD' : 'Root@135',
+        'POOL_OPTIONS' : {
+            'POOL_SIZE': 4,
+            'MAX_OVERFLOW': 2,
+            'RECYCLE': 24 * 60 * 60
+        }
     }
 }
 
@@ -115,9 +141,53 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+# STATIC_URL = 'static/'
+MEDIA_URL="/media/"
+MEDIA_ROOT=os.path.join(BASE_DIR,"media")
+
+STATIC_URL="/static/"
+STATIC_ROOT=os.path.join(BASE_DIR,"static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version' : 1,
+    'disable_existing_loggers' : True,
+    'formatters' : {
+        'file' : {
+            'format' : '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        },
+        'console' : {
+            'format' : '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        }
+    },
+    'handlers' : {
+        'file_health': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'health.log',
+            'maxBytes': 10485700, #020 MB
+            'backupCount': 2,
+            'formatter': 'file',
+            'delay': False
+        },
+        'console' : {
+            'class' : 'logging.StreamHandler',
+            'formatter': 'console'
+        }
+    },
+    'loggers' : {
+        'django' : {
+            'level' : 'ERROR',
+            'handlers' : ['console'],
+            'propagate' : True
+        },
+        'health' : {
+            'level' : 'DEBUG',
+            'handlers' :['file_health'],
+            'propagate' : True,
+        }
+    }
+}
